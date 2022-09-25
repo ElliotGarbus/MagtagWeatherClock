@@ -199,16 +199,18 @@ def get_weather(p_ram):  # pass in the PersistentRam object
 # in the W state the Weather data is updated from the network.
 
 pr = PersistentRam()
-# pr.state = 'T'
+# pr.state = 'I'
 print(f'App State: {pr.state}')
 
 if pr.state == 'U':  # Update time
     start_time = time.monotonic()
     update_display(pr) # update time
     now = RTC().datetime
-    if now.tm_min in (1, 31):  # update weather  every 30 min from network
+    if now.tm_hour in range(6, 20) and now.tm_min in (1, 31):  # update weather  every 30 min from network from 6am to 7pm
         pr.state = 'W'
-    elif now.tm_hour in [1, 6, 12, 18] and now.tm_min == 7: # update time every 6 hours at 7 min past the hour
+    elif now.tm_hour in range(20, 24 ) and now.tm_min == 1: # update weather every hour from 8 to 11pm, no weather updates after 11pm until 6am
+        pr.state = 'W'
+    elif now.tm_hour in range(0, 24, 3) and now.tm_min == 7: # update time every 3 hours at 7 min past the hour
         pr.state = 'T'
     duration = time.monotonic() - start_time
     magtag.exit_and_deep_sleep(58 - duration)  # results in a 60 second wait
@@ -240,7 +242,7 @@ elif pr.state == 'I':   # Get time and data from network
     magtag.network.enabled=False
     update_display(pr)
     pr.state = 'U'
-    magtag.exit_and_deep_sleep(60 - RTC().datetime.tm_sec)  # set so time updates near the min change
+    magtag.exit_and_deep_sleep((120 - 2 - RTC().datetime.tm_sec) % 60)  # set so time updates at the min change
 else:
     raise ValueError('Invalid application state')
 
