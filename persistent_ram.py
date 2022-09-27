@@ -1,12 +1,12 @@
 """
 PersistentRam
 provides convenient access to the alarm.sleep_memory.
-The PersistentRam stores the current state of the program (I, U or W) and
+The PersistentRam stores the current state of the program (I, U, W, or T) and
 the current weather data from the last time the network was accessed.
 
 Memory map:
 Location    Content
-0           state - either a U or I
+0           state - either a 'I', 'U', 'W' or 'T'
 1:5         length - the length of the JSON string that holds the weather data
 5:          the data
 
