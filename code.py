@@ -36,6 +36,9 @@ icons_large_bmp, icons_large_pal = adafruit_imageload.load(ICONS_LARGE_FILE)
 
 
 class HBoxLayout(Group):
+    # Objects appended to the HBoxLayout are positioned after one another in the horizontal.
+    # Used to position a collection of labels and TileGrid into a GridLayout in .
+    # also used to concatenate text with multiple sizes
     @property
     def width(self):
         _width = 0
@@ -48,6 +51,7 @@ class HBoxLayout(Group):
 
     @property
     def height(self):
+        # this is not correct - but not really used.  TODO: fix
         return max([w.height for w in self])
 
     def append(self, layer):
@@ -63,7 +67,6 @@ def horizontal_center(start=0, end=296, width=0):
 
 def display_time_day():
     # get the current time from the RTC and set the display
-    # returns a Group ready to append to the splash
     hours = ['12', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11']
     days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
@@ -137,6 +140,9 @@ def display_todays_weather(today):
     magtag.splash.append(today_icon)
 
 def display_forecasts(forecasts):
+    # passed in forcast data dict
+    # GridLayout used to position the data
+    # GridLayout requires postioned objects have a width attribute, HBoxLayout is used.
     days = ("M", "T", "W", "T", "F", "S", "S")
     day_index = (RTC().datetime.tm_wday + 1) % 7
 
@@ -189,14 +195,13 @@ def get_weather(p_ram):  # pass in the PersistentRam object
     fw_data = filter_weather_data(w_data)
     p_ram.weather_data = fw_data # write the weather
 
-# There are 3 states in the program initialize ('I') update ('U'), and weather ('W')
+# There are 4 states in the program initialize ('I') update ('U'), time ('T') and weather ('W')
 # In the initialize state, the network is enabled, the time and weather data is collected
 # from the network.  Data is displayed, the state is set to update time.
 # The board then sleeps until it is time to update the clock (min boundry).
 
 # In the update state the clock display is updated every minute using the RTC. The board sleeps for 60 seconds.
-# At the 30 min intervals, the state is set to 'W'.
-# in the W state the Weather data is updated from the network.
+
 
 pr = PersistentRam()
 # pr.state = 'I'
