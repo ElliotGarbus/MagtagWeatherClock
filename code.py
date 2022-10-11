@@ -106,7 +106,7 @@ def filter_weather_data(weather_json):
 
 
 def display_todays_weather(today):
-    # passed the todays weather dictionary
+    # passed the today's weather dictionary
     today_icon = TileGrid(icons_large_bmp, pixel_shader=icons_large_pal,
                           x=horizontal_center(end=today_panel_width, width=70),
                           y=29, width=1, height=1, tile_width=70, tile_height=70)
@@ -224,13 +224,14 @@ if pr.state == 'U':  # Update time
     start_time = time.monotonic()
     update_display(pr)  # update time
     now = RTC().datetime
-    if now.tm_hour in range(6, 20) and now.tm_min in (
-    1, 31):  # update weather  every 30 min from network from 6am to 7pm
+    if now.tm_hour in range(6, 20) and now.tm_min in (1, 31):
+        # update weather  every 30 min from network from 6am to 7pm
         pr.state = 'W'
-    elif now.tm_hour in range(20,
-                              24) and now.tm_min == 1:  # update weather every hour from 8 to 11pm, no weather updates after 11pm until 6am
+    elif now.tm_hour in range(20, 24) and now.tm_min == 1:
+        # update weather every hour from 8 to 11pm, no weather updates after 11pm until 6am
         pr.state = 'W'
-    elif now.tm_hour in range(0, 24, 3) and now.tm_min == 7:  # update time every 3 hours at 7 min past the hour
+    elif now.tm_hour in range(0, 24, 3) and now.tm_min == 7:
+        # update time every 3 hours at 7 min past the hour
         pr.state = 'T'
     duration = time.monotonic() - start_time
     time_alarm = alarm.time.TimeAlarm(monotonic_time=time.monotonic() + 58 - duration)  # results in a 60 second wait
@@ -266,15 +267,8 @@ elif pr.state == 'I':  # Get time and data from network
     magtag.network.enabled = False
     update_display(pr)
     pr.state = 'U'
-    time_alarm = alarm.time.TimeAlarm(
-        monotonic_time=time.monotonic() + ((120 - 2 - RTC().datetime.tm_sec) % 60))  # results in a 60 second wait
+    # set time alarm to start near the minute change... this seems to work
+    time_alarm = alarm.time.TimeAlarm(monotonic_time=time.monotonic() + ((120 - 2 - RTC().datetime.tm_sec) % 60))
     alarm.exit_and_deep_sleep_until_alarms(pin_alarm, time_alarm)
-    # magtag.exit_and_deep_sleep((120 - 2 - RTC().datetime.tm_sec) % 60)  # set so time updates at the min change
 else:
     raise ValueError('Invalid application state')
-
-
-
-
-
-
