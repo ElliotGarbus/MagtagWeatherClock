@@ -8,24 +8,24 @@ import terminalio
 from rtc import RTC
 import json
 import time
+import alarm
+import board
 
 from persistent_ram import PersistentRam
 from secrets import secrets
-
 
 magtag = MagTag()
 # print(f'{magtag.peripherals.speaker_disable=}')  # speaker is not enabled by default
 # print(f'{magtag.peripherals.neopixel_disable=}')
 # print(f'{magtag.network.enabled=}')
-magtag.peripherals.neopixel_disable = True # shut down to preserve power
-magtag.network.enabled=False
-
+magtag.peripherals.neopixel_disable = True  # shut down to preserve power
+magtag.network.enabled = False
 
 # Screen Resolution 296 x 128
 # print(f'{magtag.graphics.display.width=}')
 # print(f'{magtag.graphics.display.height=}')
 
-today_panel_width = 170 # width of the left side of the screen
+today_panel_width = 170  # width of the left side of the screen
 
 ICONS_SMALL_FILE = "/bmps/weather_icons_20px.bmp"
 ICONS_LARGE_FILE = "/bmps/weather_icons_70px.bmp"
@@ -56,14 +56,16 @@ class HBoxLayout(Group):
 
     def append(self, layer):
         if not len(self):
-            layer.x = 0 # the first widget starts at zero
+            layer.x = 0  # the first widget starts at zero
         else:
             layer.x = self.width
         super().append(layer)
 
+
 def horizontal_center(start=0, end=296, width=0):
     # returns the x value to center the object
-    return ((end - start) - width)//2 + start
+    return ((end - start) - width) // 2 + start
+
 
 def display_time_day():
     # get the current time from the RTC and set the display
@@ -100,7 +102,8 @@ def filter_weather_data(weather_json):
         for k in ['min', 'max']:
             d.update({k: round(weather_json['daily'][i]['temp'][k])})
         forcast_sd.append(d)
-    return {'today': today_sd, 'forecast':forcast_sd}
+    return {'today': today_sd, 'forecast': forcast_sd}
+
 
 def display_todays_weather(today):
     # passed the todays weather dictionary
@@ -116,20 +119,20 @@ def display_todays_weather(today):
     current_temp.x = horizontal_center(start=10, end=today_icon.x, width=current_temp.width)
 
     uv = Label(terminalio.FONT, text=f'UV:{today["uvi"]} H:{today["humidity"]}%', color=0x000000, scale=2)
-    uv.y = 128 - uv.height//2 - 5
-    uv.x = horizontal_center(end=today_panel_width, width=uv.width*uv.scale)
+    uv.y = 128 - uv.height // 2 - 5
+    uv.x = horizontal_center(end=today_panel_width, width=uv.width * uv.scale)
 
     today_high = HBoxLayout()
     today_high.append(Label(terminalio.FONT, text=f'{today["max"]}', color=0x000000, scale=2))
     today_high.append(Label(terminalio.FONT, text='o', y=-6, color=0x000000, scale=1))
-    today_high.x = horizontal_center(start=today_icon.x+70, end=today_panel_width, width=today_high.width)
-    today_high.y = 29 + today_high.height//2 + 12
+    today_high.x = horizontal_center(start=today_icon.x + 70, end=today_panel_width, width=today_high.width)
+    today_high.y = 29 + today_high.height // 2 + 12
 
     today_low = HBoxLayout()
     today_low.append(Label(terminalio.FONT, text=f'{today["min"]}', color=0x000000, scale=2))
     today_low.append(Label(terminalio.FONT, text='o', y=-6, color=0x000000, scale=1))
-    today_low.x = horizontal_center(start=today_icon.x+70, end=today_panel_width, width=today_low.width)
-    today_low.y = 29 + 70 - today_low.height//2 - 12
+    today_low.x = horizontal_center(start=today_icon.x + 70, end=today_panel_width, width=today_low.width)
+    today_low.y = 29 + 70 - today_low.height // 2 - 12
 
     today_icon[0] = ICON_MAP.index(today['icon'][:2])
 
@@ -138,6 +141,7 @@ def display_todays_weather(today):
     magtag.splash.append(today_high)
     magtag.splash.append(today_low)
     magtag.splash.append(today_icon)
+
 
 def display_forecasts(forecasts):
     # passed in forcast data dict
@@ -165,26 +169,29 @@ def display_forecasts(forecasts):
         group.append(Label(terminalio.FONT, text='o', y=-6, color=0x000000, scale=1))
         group.append(Label(terminalio.FONT, text=f'/{row["max"]}', color=0x000000, scale=2))
         group.append(Label(terminalio.FONT, text='o', y=-6, color=0x000000, scale=1))
-        forecast_layout.add_content(cell_content=group, grid_position=(0, i), cell_size=(1,1))
+        forecast_layout.add_content(cell_content=group, grid_position=(0, i), cell_size=(1, 1))
     magtag.splash.append(forecast_layout)
 
-def update_display(p_ram): # # pass in the PersistentRam object
+
+def update_display(p_ram):  # # pass in the PersistentRam object
     w_data = p_ram.weather_data
     display_todays_weather(w_data['today'])
     display_forecasts(w_data['forecast'])
     display_time_day()
     magtag.refresh()
 
+
 def get_time():
     try:
         magtag.network.get_local_time()  # updates the RTC
     except (OSError, RuntimeError, HttpError) as e:
-        print(f'Error {e}') # if fails time will continut to come from the RTC
+        print(f'Error {e}')  # if fails time will continut to come from the RTC
+
 
 def get_weather(p_ram):  # pass in the PersistentRam object
     url = (f'https://api.openweathermap.org/data/3.0/onecall?lat={secrets["openweather_lat"]}' +
-       f'&lon={secrets["openweather_lon"]}&exclude=minutely,hourly,alerts&units=imperial' +
-       f'&appid={secrets["openweather_token"]}')
+           f'&lon={secrets["openweather_lon"]}&exclude=minutely,hourly,alerts&units=imperial' +
+           f'&appid={secrets["openweather_token"]}')
     try:
         w_str = magtag.fetch(url)
     except (OSError, RuntimeError, HttpError) as e:
@@ -193,7 +200,8 @@ def get_weather(p_ram):  # pass in the PersistentRam object
         magtag.exit_and_deep_sleep(60)  # wait one minute and retry
     w_data = json.loads(w_str)
     fw_data = filter_weather_data(w_data)
-    p_ram.weather_data = fw_data # write the weather
+    p_ram.weather_data = fw_data  # write the weather
+
 
 # There are 4 states in the program initialize ('I') update ('U'), time ('T') and weather ('W')
 # In the initialize state, the network is enabled, the time and weather data is collected
@@ -202,52 +210,66 @@ def get_weather(p_ram):  # pass in the PersistentRam object
 
 # In the update state the clock display is updated every minute using the RTC. The board sleeps for 60 seconds.
 
-
 pr = PersistentRam()
-# pr.state = 'I'
+
+print(f'{alarm.wake_alarm=}')
+if isinstance(alarm.wake_alarm, alarm.pin.PinAlarm):
+    # print('Pin Alarm caused wake up')
+    pr.state = 'I'  # if button pressed set state to initialize to force getting time and a new forcast
 print(f'App State: {pr.state}')
+magtag.peripherals.buttons[3].deinit()  # free resources associated with Button_D or pin D11.
+pin_alarm = alarm.pin.PinAlarm(board.D11, value=False, pull=True)
 
 if pr.state == 'U':  # Update time
     start_time = time.monotonic()
-    update_display(pr) # update time
+    update_display(pr)  # update time
     now = RTC().datetime
-    if now.tm_hour in range(6, 20) and now.tm_min in (1, 31):  # update weather  every 30 min from network from 6am to 7pm
+    if now.tm_hour in range(6, 20) and now.tm_min in (
+    1, 31):  # update weather  every 30 min from network from 6am to 7pm
         pr.state = 'W'
-    elif now.tm_hour in range(20, 24 ) and now.tm_min == 1: # update weather every hour from 8 to 11pm, no weather updates after 11pm until 6am
+    elif now.tm_hour in range(20,
+                              24) and now.tm_min == 1:  # update weather every hour from 8 to 11pm, no weather updates after 11pm until 6am
         pr.state = 'W'
-    elif now.tm_hour in range(0, 24, 3) and now.tm_min == 7: # update time every 3 hours at 7 min past the hour
+    elif now.tm_hour in range(0, 24, 3) and now.tm_min == 7:  # update time every 3 hours at 7 min past the hour
         pr.state = 'T'
     duration = time.monotonic() - start_time
-    magtag.exit_and_deep_sleep(58 - duration)  # results in a 60 second wait
+    time_alarm = alarm.time.TimeAlarm(monotonic_time=time.monotonic() + 58 - duration)  # results in a 60 second wait
+    alarm.exit_and_deep_sleep_until_alarms(pin_alarm, time_alarm)
 
 elif pr.state == 'W':  # Update weather data
     start_time = time.monotonic()
-    magtag.network.enabled=True
+    magtag.network.enabled = True
     get_weather(pr)
-    magtag.network.enabled=False
+    magtag.network.enabled = False
     update_display(pr)
     pr.state = 'U'
     duration = time.monotonic() - start_time
-    magtag.exit_and_deep_sleep(58 - duration) # results in a 60 second wait
+    time_alarm = alarm.time.TimeAlarm(monotonic_time=time.monotonic() + 58 - duration)  # results in a 60 second wait
+    alarm.exit_and_deep_sleep_until_alarms(pin_alarm, time_alarm)
 
-elif pr.state == 'T': # update the time
+elif pr.state == 'T':  # update the time
     start_time = time.monotonic()
-    magtag.network.enabled=True
+    magtag.network.enabled = True
     get_time()
-    magtag.network.enabled=False
+    magtag.network.enabled = False
     update_display(pr)
     pr.state = 'U'
     duration = time.monotonic() - start_time
-    magtag.exit_and_deep_sleep(58 - duration) # results in a 60 second wait
+    time_alarm = alarm.time.TimeAlarm(monotonic_time=time.monotonic() + 58 - duration)  # results in a 60 second wait
+    alarm.exit_and_deep_sleep_until_alarms(pin_alarm, time_alarm)
 
-elif pr.state == 'I':   # Get time and data from network
-    magtag.network.enabled=True
+
+elif pr.state == 'I':  # Get time and data from network
+    magtag.network.enabled = True
     get_time()
     get_weather(pr)
-    magtag.network.enabled=False
+    magtag.network.enabled = False
     update_display(pr)
     pr.state = 'U'
-    magtag.exit_and_deep_sleep((120 - 2 - RTC().datetime.tm_sec) % 60)  # set so time updates at the min change
+    time_alarm = alarm.time.TimeAlarm(
+        monotonic_time=time.monotonic() + ((120 - 2 - RTC().datetime.tm_sec) % 60))  # results in a 60 second wait
+    alarm.exit_and_deep_sleep_until_alarms(pin_alarm, time_alarm)
+    # magtag.exit_and_deep_sleep((120 - 2 - RTC().datetime.tm_sec) % 60)  # set so time updates at the min change
 else:
     raise ValueError('Invalid application state')
 
