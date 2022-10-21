@@ -1,5 +1,5 @@
 # MagtagWeatherClock
-Displays the time, day current weather and a 4-day forecast.
+Displays the time, day, current weather and a 4-day forecast.
 
 Pressing the D11 button forces an update of the weather and time.
 
